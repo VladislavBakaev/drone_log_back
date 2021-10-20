@@ -1,0 +1,16 @@
+.git/
+.idea/
+*.pyc
+*.log
+*.log.*
+db.sqlite3
+data/venv
+venv
+*.yaml
+*.yml
+.env
+.vscode
+__pycache__/
+media/
+log/
+example.waypoints
