@@ -13,7 +13,6 @@ class TestApi(APIView):
     def post(self, request):
         files = request.FILES
         data = request.data
-        mission = None
 
         if not files.get('file', None) is None:
             # with files['file'] as f:
@@ -23,7 +22,7 @@ class TestApi(APIView):
         try:
             mission = Mission.objects.get(mission_name=data['mission_name'],at_create=data['mission_create_datetime'])
         except ObjectDoesNotExist:
-            print('Mission does not exist')
+            mission = None
 
         if mission is None:
             mission = Mission(mission_name=data.get('mission_name'),
@@ -54,10 +53,13 @@ class TestApi(APIView):
         return JsonResponse({}, status=200)
 
     def _newPointFromData(self, data, mission):
-        new_point = Point(param1=data['param1'], param2=data['param2'], param3=data['param3'],
-                            param4=data['param4'], x=data['x'], y=data['y'], z=data['z'],
-                            seq=data['seq'], command=data['command'], target_system=data['target_system'],
-                            target_component=data['target_component'], frame=data['frame'],
-                            current=data['current'], autocontinue=data['autocontinue'], mission_type=data['mission_type'])
-        new_point.mission = mission
-        new_point.save()
+        try:
+            new_point = Point(param1=data['param1'], param2=data['param2'], param3=data['param3'],
+                                param4=data['param4'], x=data['x'], y=data['y'], z=data['z'],
+                                seq=data['seq'], command=data['command'], target_system=data['target_system'],
+                                target_component=data['target_component'], frame=data['frame'],
+                                current=data['current'], autocontinue=data['autocontinue'], mission_type=data['mission_type'])
+            new_point.mission = mission
+            new_point.save()
+        except Exception as e:
+            print(e)
