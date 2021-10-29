@@ -19,4 +19,5 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/mission/', include('mission.urls')),
+    path('api/yd/', include('yd_drone.urls'))
 ]
