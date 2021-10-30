@@ -2,7 +2,6 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser, FileUploadParser
 from django.core.exceptions import ObjectDoesNotExist
-from django.core import serializers
 
 from mission.models import Mission, Point, UserInfo
 
