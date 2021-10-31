@@ -10,16 +10,37 @@ import uuid
 
 from drone_info.settings import MEDIA_ROOT
 from yd_drone.models import YDMission, YDLogFile, YDMissionPoint
-from yd_drone.bin_parsers import read_mission_bin_file, read_log_bin_file, read_mission_bytes_array
+from yd_drone.bin_parsers import read_mission_bytes_array
 
 
 class FlightMissionData(APIView):
 
     def get(self, request, *args, **kwargs):
-        mission = YDMission.objects.get(id=kwargs['id'])
-        file_path = MEDIA_ROOT + '/' +mission.flight_mission_file.name
-        points = read_mission_bin_file(file_path)
-        return JsonResponse({}, status=200)
+
+        status = 200
+
+        try:
+            mission = YDMission.objects.get(id=kwargs['id'])
+        except ObjectDoesNotExist:
+            mission = None
+        
+        if mission is None:
+            result = "Mission with id '{0}' does not exist".format(kwargs['id'])
+            status = 400
+        else:
+            points_qs = YDMissionPoint.objects.filter(mission__id=kwargs['id'])
+            points_raw = json.loads(serializers.serialize('json', points_qs))
+            result = {'points':[],
+                      'mission_name':mission.mission_name,
+                      'description':mission.description,
+                      'at_create':mission.at_create,
+                      'user_info':mission.user_info}
+            for point_raw in points_raw:
+                fields = point_raw['fields']
+                fields.pop('mission', None)
+                result['points'].append(fields)
+
+        return JsonResponse({'result':result}, status=status) 
 
 
 class LoadFlightMissionData(APIView):
