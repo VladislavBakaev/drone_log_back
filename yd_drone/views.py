@@ -9,8 +9,9 @@ import json
 import uuid
 
 from drone_info.settings import MEDIA_ROOT
-from yd_drone.models import YDMission
+from yd_drone.models import YDMission, YDLogFile
 from yd_drone.bin_parsers import read_mission_bin_file, read_log_bin_file
+
 
 class GetFlightMissionData(APIView):
 
@@ -20,10 +21,12 @@ class GetFlightMissionData(APIView):
         points = read_mission_bin_file(file_path)
         return JsonResponse({}, status=200)
 
+
 class GetMissionLogsData(APIView):
     
     def get(self, request):
         return JsonResponse({}, status=200)
+
 
 class LoadFlightMissionData(APIView):
     
@@ -58,6 +61,7 @@ class LoadFlightMissionData(APIView):
 
         return JsonResponse({'message':message}, status=status) 
 
+
 class FlightMissionHeagers(APIView):
     
     def get(self, request):
@@ -69,3 +73,15 @@ class FlightMissionHeagers(APIView):
             fields['at_create'] = ' '.join(fields['at_create'].split('T'))[:-5]
             response['result'].append(fields)
         return JsonResponse(response, status=200)
+
+
+class MissionLogLoad(APIView):
+
+    def post(self, request):
+        files = request.FILES
+        data = json.loads(request.data['info'])
+
+        status = 200
+        message = 'Success'
+
+        return JsonResponse({'message':message}, status=status) 
