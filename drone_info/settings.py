@@ -91,18 +91,18 @@ WSGI_APPLICATION = 'drone_info.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
     # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    #     'NAME': os.environ.get("POSTGRES_DB", "dronelog"),
-    #     'USER': os.environ.get("POSTGRES_USER", "parkpass"),
-    #     'PASSWORD': os.environ.get("POSTGRES_PASSWORD", "parkpass"),
-    #     'HOST': os.environ.get("POSTGRES_DATABASE_HOST", "127.0.0.1"),
-    #     'PORT': '',  # Set to empty string for default.
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
     # }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ.get("POSTGRES_DB", "dronelog"),
+        'USER': os.environ.get("POSTGRES_USER", "parkpass"),
+        'PASSWORD': os.environ.get("POSTGRES_PASSWORD", "parkpass"),
+        'HOST': os.environ.get("POSTGRES_DATABASE_HOST", "127.0.0.1"),
+        'PORT': '',  # Set to empty string for default.
+    }
 }
 
 

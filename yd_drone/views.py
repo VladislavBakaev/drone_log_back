@@ -71,6 +71,9 @@ class FlightMissionHeagers(APIView):
         for mission in data:
             fields = mission['fields']
             fields['at_create'] = ' '.join(fields['at_create'].split('T'))[:-5]
+            log_count = YDLogFile.objects.filter(mission__id=mission['pk']).count()
+            fields['log_count'] = log_count
+            fields['id'] = mission['pk']
             response['result'].append(fields)
         return JsonResponse(response, status=200)
 
@@ -83,5 +86,22 @@ class MissionLogLoad(APIView):
 
         status = 200
         message = 'Success'
+
+        try:
+            mission = YDMission.objects.get(mission_name=data['mission_name'])
+        except ObjectDoesNotExist:
+            mission = None
+
+        if mission is None:
+            status = 400
+            message = "Миссия с названием '{0}' не существует. Лог можно добавить только к существующей миссии".format(data['mission_name'])
+        else:
+            new_log = YDLogFile()
+            new_log.mission = mission
+            new_log.flight_data = data['flight_data']
+            new_log.description = data['mission_description']
+            new_log.at_create = timezone.now()
+            new_log.upload = files['log']
+            new_log.save()
 
         return JsonResponse({'message':message}, status=status) 
