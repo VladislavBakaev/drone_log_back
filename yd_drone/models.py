@@ -1,7 +1,5 @@
 from django.db import models
 
-# Create your models here.
-
 class YDLogFile(models.Model):
     upload = models.FileField(upload_to="logs/")
     flight_data = models.DateTimeField()
@@ -31,3 +29,28 @@ class YDMission(models.Model):
     class Meta:
         db_table = 'yd_drone_missions'
         unique_together = ('user_info' , 'mission_name')
+
+
+class YDMissionPoint(models.Model):
+    mission = models.ForeignKey(YDMission, on_delete=models.CASCADE)
+    targetLat = models.DecimalField(max_digits=15, decimal_places=9)
+    targetLon = models.DecimalField(max_digits=15, decimal_places=9)
+    targetAlt = models.DecimalField(max_digits=9, decimal_places=4)
+    targetRadius = models.DecimalField(max_digits=9, decimal_places=4)
+    loiterTime = models.IntegerField()
+    maxHorizSpeed = models.DecimalField(max_digits=9, decimal_places=4)
+    maxVertSpeed = models.DecimalField(max_digits=9, decimal_places=4)
+    poiLat = models.DecimalField(max_digits=15, decimal_places=9)
+    poiLon = models.DecimalField(max_digits=15, decimal_places=9)
+    poiHeading = models.DecimalField(max_digits=9, decimal_places=4)
+    poiAltitude = models.DecimalField(max_digits=9, decimal_places=4)
+    flags = models.IntegerField()
+    photo = models.IntegerField()
+    panoSectorsCount = models.IntegerField()
+    panoDeltaAngle = models.DecimalField(max_digits=9, decimal_places=4)
+    poiPitch = models.DecimalField(max_digits=9, decimal_places=4)
+    poiRoll = models.DecimalField(max_digits=9, decimal_places=4)
+    type = models.IntegerField()
+
+    class Meta:
+        db_table = 'yd_drone_mission_point'

@@ -1,10 +1,10 @@
-from django.conf.urls import url
+from django.urls import re_path
 
-from yd_drone.views import GetFlightMissionData, LoadFlightMissionData, FlightMissionHeagers, MissionLogLoad
+from yd_drone.views import FlightMissionData, LoadFlightMissionData, FlightMissionHeagers, MissionLogLoad
 
 urlpatterns = [
-    url(r'flightmission/get$', GetFlightMissionData.as_view()),
-    url(r'flightmission/load$', LoadFlightMissionData.as_view()),
-    url(r'mission/get$', FlightMissionHeagers.as_view()),
-    url(r'logs/load$', MissionLogLoad.as_view())
+    re_path(r'^mission/(?P<id>\d+)$', FlightMissionData.as_view()),
+    re_path(r'^flightmission/load$', LoadFlightMissionData.as_view()),
+    re_path(r'^missions/get$', FlightMissionHeagers.as_view()),
+    re_path(r'^logs/load$', MissionLogLoad.as_view())
 ]

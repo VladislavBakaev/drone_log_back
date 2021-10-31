@@ -1,5 +1,5 @@
 from django.contrib import admin
-from yd_drone.models import YDLogFile, YDMission
+from yd_drone.models import YDLogFile, YDMission, YDMissionPoint
 
 @admin.register(YDLogFile)
 class YDLogFileAdmin(admin.ModelAdmin):
@@ -9,3 +9,7 @@ class YDLogFileAdmin(admin.ModelAdmin):
 @admin.register(YDMission)
 class YDMissionAdmin(admin.ModelAdmin):
     list_display = ('id', 'mission_name', 'user_info', 'at_create')
+
+@admin.register(YDMissionPoint)
+class YDMissionPointAdmin(admin.ModelAdmin):
+    list_display = ('id', 'mission')
