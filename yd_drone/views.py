@@ -7,6 +7,7 @@ from rest_framework.parsers import JSONParser, FileUploadParser
 
 import json
 import uuid
+import time
 
 from drone_info.settings import MEDIA_ROOT
 from yd_drone.models import YDMission, YDLogFile, YDMissionPoint
@@ -30,10 +31,12 @@ class FlightMissionData(APIView):
         else:
             points_qs = YDMissionPoint.objects.filter(mission__id=kwargs['id'])
             points_raw = json.loads(serializers.serialize('json', points_qs))
+            at_create = ' '.join(str(mission.at_create).split('T'))[:-13]
             result = {'points':[],
+                      'id': kwargs['id'],
                       'mission_name':mission.mission_name,
                       'description':mission.description,
-                      'at_create':mission.at_create,
+                      'at_create':at_create, 
                       'user_info':mission.user_info}
             for point_raw in points_raw:
                 fields = point_raw['fields']
@@ -41,6 +44,29 @@ class FlightMissionData(APIView):
                 result['points'].append(fields)
 
         return JsonResponse({'result':result}, status=status) 
+
+class FlightMissionDataWithParams(APIView):
+    def get(self, request, *args, **kwargs):
+        status = 200
+        result = ''
+
+        mission_name = request.query_params.get('name', '')
+        user = request.query_params.get('user', '')
+        start_date = request.query_params.get('start_date', '1960-12-09T15:59:00.000Z')
+        end_date = request.query_params.get('end_date', '2040-12-09T15:59:00.000Z')
+
+        missions_qs = YDMission.objects.filter(mission_name__icontains=mission_name,
+                                               user_info__icontains=user,
+                                               at_create__gte=start_date,
+                                               at_create__lte=end_date)
+        missions_raw = json.loads(serializers.serialize('json', missions_qs))
+        missions = []
+        for mission_raw in missions_raw:
+            mission = mission_raw['fields']
+            mission['id'] = mission_raw['pk']
+            missions.append(mission)
+
+        return JsonResponse({'result':missions}, status=status)  
 
 
 class LoadFlightMissionData(APIView):
@@ -126,7 +152,7 @@ class FlightMissionHeagers(APIView):
         return JsonResponse(response, status=200)
 
 
-class MissionLogLoad(APIView):
+class LoadMissionLog(APIView):
 
     def post(self, request):
         files = request.FILES
@@ -145,6 +171,9 @@ class MissionLogLoad(APIView):
             message = "Миссия с названием '{0}' не существует. Лог можно добавить только к существующей миссии".format(data['mission_name'])
         else:
             new_log = YDLogFile()
+            file_name = uuid.uuid4().hex +'.'+ files['log'].name.split('.')[1]
+            files['log'].name = file_name
+
             new_log.mission = mission
             new_log.flight_data = data['flight_data']
             new_log.description = data['mission_description']
