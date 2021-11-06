@@ -64,6 +64,14 @@ class FlightMissionDataWithParams(APIView):
         for mission_raw in missions_raw:
             mission = mission_raw['fields']
             mission['id'] = mission_raw['pk']
+            points_qs = YDMissionPoint.objects.filter(mission__id=mission['id'])
+            points_raw = json.loads(serializers.serialize('json', points_qs))
+            mission['points'] = []
+            if len(points_raw) != 0:
+                for point in points_raw:
+                    point = point.get('fields')
+                    point.pop('mission', None)
+                    mission['points'].append(point)
             missions.append(mission)
 
         return JsonResponse({'result':missions}, status=status)  
