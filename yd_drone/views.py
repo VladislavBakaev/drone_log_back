@@ -219,6 +219,9 @@ class MissionLogDataWithParams(APIView):
 
         for log_raw in logs_raw:
             log = log_raw['fields']
+            if not log['mission'] is None:
+                mission = YDMission.objects.get(id=log['mission'])
+                log['mission'] = mission.mission_name
             points = read_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
             log['points'] = points
             logs.append(log)
