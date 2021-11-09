@@ -11,7 +11,7 @@ import time
 
 from drone_info.settings import MEDIA_ROOT
 from yd_drone.models import YDMission, YDLogFile, YDMissionPoint
-from yd_drone.bin_parsers import read_mission_bytes_array
+from yd_drone.bin_parsers import read_mission_bytes_array, read_log_bin_file
 
 
 class FlightMissionData(APIView):
@@ -45,10 +45,10 @@ class FlightMissionData(APIView):
 
         return JsonResponse({'result':result}, status=status) 
 
+
 class FlightMissionDataWithParams(APIView):
     def get(self, request, *args, **kwargs):
         status = 200
-        result = ''
 
         mission_name = request.query_params.get('name', '')
         user = request.query_params.get('user', '')
@@ -161,7 +161,7 @@ class FlightMissionHeagers(APIView):
 
 
 class LoadMissionLog(APIView):
-
+    
     def post(self, request):
         files = request.FILES
         data = json.loads(request.data['info'])
@@ -174,9 +174,9 @@ class LoadMissionLog(APIView):
         except ObjectDoesNotExist:
             mission = None
 
-        if mission is None:
+        if mission is None and data['mission_name']!='':
             status = 400
-            message = "Миссия с названием '{0}' не существует. Лог можно добавить только к существующей миссии".format(data['mission_name'])
+            message = "Миссия с названием '{0}' не существует. Для сохранения файла лога без миссии оставьте поле 'имя миссии' пустым".format(data['mission_name'])
         else:
             new_log = YDLogFile()
             file_name = uuid.uuid4().hex +'.'+ files['log'].name.split('.')[1]
@@ -190,3 +190,37 @@ class LoadMissionLog(APIView):
             new_log.save()
 
         return JsonResponse({'message':message}, status=status) 
+
+
+class MissionLogDataWithParams(APIView):
+
+    def get(self, request):
+        status = 200
+
+        mission_name = request.query_params.get('name', '')
+        start_date = request.query_params.get('start_date', '1960-12-09T15:59:00.000Z')
+        end_date = request.query_params.get('end_date', '2040-12-09T15:59:00.000Z')
+
+        try:
+            mission_qs = YDMission.objects.get(mission_name__icontains=mission_name)
+        except:
+            mission_qs = None
+
+        if mission_qs is None:
+            logs_qs = YDLogFile.objects.filter(at_create__gte=start_date,
+                                                at_create__lte=end_date)
+        else:
+            logs_qs = YDLogFile.objects.filter(mission=mission_qs,
+                                                at_create__gte=start_date,
+                                                at_create__lte=end_date)
+    
+        logs_raw = json.loads(serializers.serialize('json', logs_qs))
+        logs = []
+
+        for log_raw in logs_raw:
+            log = log_raw['fields']
+            points = read_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
+            log['points'] = points
+            logs.append(log)
+
+        return JsonResponse({'result':logs}, status=status)  

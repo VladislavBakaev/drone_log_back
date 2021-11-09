@@ -1,5 +1,6 @@
 import numpy as np
 from struct import unpack
+import os
 
 adc_sensors = 24
 motors_num = 14
@@ -31,16 +32,48 @@ def read_mission_bytes_array(bytes_array):
     return points
 
 def read_log_bin_file(file_name):
-    pattern = "<BL{0}f12f{1}h3B5fB25f2d19f5B2df2d5f2d3fL3fh35BH".format(adc_sensors, motors_num+18)
+    # pattern = "<BL{0}f12f{1}h3B5fB25f2d19f5B2df2d5f2d3fL3fh35BH".format(adc_sensors, motors_num+18)
+
+    # with open(file_name, "rb") as bin_file:
+    #     points_bin = []
+    #     points = []
+    #     while True:
+    #         litera = bin_file.read(3)
+    #         if litera == b'':
+    #             break
+    #         points_bin.append(bin_file.read(1533))
+
+    #     point_count = len(points_bin)
+    #     step = int(point_count/50)
+        
+    #     for index in range(0, point_count, step) :
+    #         point = unpack(pattern, points_bin[index][0:573])
+    #         lat_lon_gps = point[104:106]
+    #         if (lat_lon_gps[0]==0.0 and lat_lon_gps[1]==0.0):
+    #             continue
+    #         else:
+    #             points.append(lat_lon_gps)
+
+    pattern = "<2d".format(adc_sensors, motors_num+18)
+
+    seek_step = 1520
+    seek_offset = 340
+    pack_size = 16
+    point_count = 20
+    point_step = int((os.stat(file_name).st_size/(seek_step+pack_size))/point_count)
+    points = []
+
 
     with open(file_name, "rb") as bin_file:
-        point = []
+        bin_file.seek(seek_offset)
         while True:
-            litera = bin_file.read(3)
-            if litera == b'':
+            data = bin_file.read(16)
+            if data == b'':
                 break
-            point.append(bin_file.read(1533))
-        
-        for p in point:
-            res = unpack(pattern, p[0:573])
-            print(res)
+            else:
+                point = unpack(pattern, data)
+                if point[0]!=0 and point[1]!=0:
+                    points.append(point)
+                bin_file.seek(seek_step*point_step + pack_size*(point_step-1),1)
+    return points
+    

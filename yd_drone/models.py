@@ -4,7 +4,7 @@ class YDLogFile(models.Model):
     upload = models.FileField(upload_to="logs/")
     flight_data = models.DateTimeField()
     description = models.TextField()
-    mission = models.ForeignKey('YDMission', on_delete=models.CASCADE)
+    mission = models.ForeignKey('YDMission', on_delete=models.CASCADE, null=True)
     at_create = models.DateTimeField()
 
     def delete(self, using=None, keep_parents=False):
