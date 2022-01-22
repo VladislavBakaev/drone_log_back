@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class YdDroneConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'yd_drone'
+    name = 'drone_missions_logs'

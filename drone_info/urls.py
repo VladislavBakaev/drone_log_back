@@ -21,7 +21,7 @@ from django.conf import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/mission/', include('mission.urls')),
-    path('api/yd/', include('yd_drone.urls'))
+    path('api/yd/', include('drone_missions_logs.urls'))
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

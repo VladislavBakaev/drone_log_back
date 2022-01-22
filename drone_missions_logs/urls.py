@@ -1,6 +1,6 @@
 from django.urls import re_path
 
-from yd_drone.views import FlightMissionData, LoadFlightMissionData, FlightMissionHeagers, LoadMissionLog, FlightMissionDataWithParams,\
+from drone_missions_logs.views import FlightMissionData, LoadFlightMissionData, FlightMissionHeagers, LoadMissionLog, FlightMissionDataWithParams,\
                            MissionLogDataWithParams
 
 urlpatterns = [

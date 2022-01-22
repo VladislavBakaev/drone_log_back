@@ -7,11 +7,10 @@ from rest_framework.parsers import JSONParser, FileUploadParser
 
 import json
 import uuid
-import time
 
 from drone_info.settings import MEDIA_ROOT
-from yd_drone.models import YDMission, YDLogFile, YDMissionPoint
-from yd_drone.bin_parsers import read_mission_bytes_array, read_log_bin_file
+from drone_missions_logs.models import Mission, LogFile, YDMissionPoint
+from drone_missions_logs.bin_parsers import read_mission_bytes_array, read_log_bin_file
 
 
 class FlightMissionData(APIView):
@@ -21,7 +20,7 @@ class FlightMissionData(APIView):
         status = 200
 
         try:
-            mission = YDMission.objects.get(id=kwargs['id'])
+            mission = Mission.objects.get(id=kwargs['id'])
         except ObjectDoesNotExist:
             mission = None
         
@@ -55,7 +54,7 @@ class FlightMissionDataWithParams(APIView):
         start_date = request.query_params.get('start_date', '1960-12-09T15:59:00.000Z')
         end_date = request.query_params.get('end_date', '2040-12-09T15:59:00.000Z')
 
-        missions_qs = YDMission.objects.filter(mission_name__icontains=mission_name,
+        missions_qs = Mission.objects.filter(mission_name__icontains=mission_name,
                                                user_info__icontains=user,
                                                at_create__gte=start_date,
                                                at_create__lte=end_date)
@@ -89,7 +88,7 @@ class LoadFlightMissionData(APIView):
         message = 'Success'
 
         try:
-            mission = YDMission.objects.get(mission_name=data['mission_name'])
+            mission = Mission.objects.get(mission_name=data['mission_name'])
         except ObjectDoesNotExist:
             mission = None
         
@@ -107,7 +106,7 @@ class LoadFlightMissionData(APIView):
         file_name = uuid.uuid4().hex +'.'+ files['mission'].name.split('.')[1]
         files['mission'].name = file_name
 
-        new_mission = YDMission()
+        new_mission = Mission()
         new_mission.mission_name = data['mission_name']
         new_mission.user_info = data['author']
         new_mission.description = data['mission_description']
@@ -147,13 +146,13 @@ class LoadFlightMissionData(APIView):
 class FlightMissionHeagers(APIView):
     
     def get(self, request):
-        missions = YDMission.objects.all()
+        missions = Mission.objects.all()
         data = json.loads(serializers.serialize('json', missions, fields=('mission_name','user_info','at_create')))
         response = {'result': []}
         for mission in data:
             fields = mission['fields']
             fields['at_create'] = ' '.join(fields['at_create'].split('T'))[:-5]
-            log_count = YDLogFile.objects.filter(mission__id=mission['pk']).count()
+            log_count = LogFile.objects.filter(mission__id=mission['pk']).count()
             fields['log_count'] = log_count
             fields['id'] = mission['pk']
             response['result'].append(fields)
@@ -170,7 +169,7 @@ class LoadMissionLog(APIView):
         message = 'Success'
 
         try:
-            mission = YDMission.objects.get(mission_name=data['mission_name'])
+            mission = Mission.objects.get(mission_name=data['mission_name'])
         except ObjectDoesNotExist:
             mission = None
 
@@ -178,7 +177,7 @@ class LoadMissionLog(APIView):
             status = 400
             message = "Миссия с названием '{0}' не существует. Для сохранения файла лога без миссии оставьте поле 'имя миссии' пустым".format(data['mission_name'])
         else:
-            new_log = YDLogFile()
+            new_log = LogFile()
             file_name = uuid.uuid4().hex +'.'+ files['log'].name.split('.')[1]
             files['log'].name = file_name
 
@@ -202,15 +201,15 @@ class MissionLogDataWithParams(APIView):
         end_date = request.query_params.get('end_date', '2040-12-09T15:59:00.000Z')
 
         try:
-            mission_qs = YDMission.objects.get(mission_name__icontains=mission_name)
+            mission_qs = Mission.objects.get(mission_name__icontains=mission_name)
         except:
             mission_qs = None
 
-        if mission_qs is None:
-            logs_qs = YDLogFile.objects.filter(at_create__gte=start_date,
+        if mission_qs is None or mission_name=='':
+            logs_qs = LogFile.objects.filter(at_create__gte=start_date,
                                                 at_create__lte=end_date)
         else:
-            logs_qs = YDLogFile.objects.filter(mission=mission_qs,
+            logs_qs = LogFile.objects.filter(mission=mission_qs,
                                                 at_create__gte=start_date,
                                                 at_create__lte=end_date)
     
@@ -220,7 +219,7 @@ class MissionLogDataWithParams(APIView):
         for log_raw in logs_raw:
             log = log_raw['fields']
             if not log['mission'] is None:
-                mission = YDMission.objects.get(id=log['mission'])
+                mission = Mission.objects.get(id=log['mission'])
                 log['mission'] = mission.mission_name
             points = read_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
             log['points'] = points

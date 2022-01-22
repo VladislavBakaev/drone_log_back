@@ -1,10 +1,10 @@
 from django.db import models
 
-class YDLogFile(models.Model):
+class LogFile(models.Model):
     upload = models.FileField(upload_to="logs/")
     flight_data = models.DateTimeField()
     description = models.TextField()
-    mission = models.ForeignKey('YDMission', on_delete=models.CASCADE, null=True)
+    mission = models.ForeignKey('Mission', on_delete=models.CASCADE, null=True)
     at_create = models.DateTimeField()
 
     def delete(self, using=None, keep_parents=False):
@@ -15,7 +15,7 @@ class YDLogFile(models.Model):
         db_table = 'yd_drone_logs_file'
 
 
-class YDMission(models.Model):
+class Mission(models.Model):
     mission_name = models.CharField(max_length=120)
     user_info = models.CharField(max_length=120)
     description = models.TextField()
@@ -27,12 +27,12 @@ class YDMission(models.Model):
         super().delete()
 
     class Meta:
-        db_table = 'yd_drone_missions'
+        db_table = 'drone_missions'
         unique_together = ('user_info' , 'mission_name')
 
 
 class YDMissionPoint(models.Model):
-    mission = models.ForeignKey(YDMission, on_delete=models.CASCADE)
+    mission = models.ForeignKey(Mission, on_delete=models.CASCADE)
     targetLat = models.DecimalField(max_digits=15, decimal_places=9)
     targetLon = models.DecimalField(max_digits=15, decimal_places=9)
     targetAlt = models.DecimalField(max_digits=9, decimal_places=4)

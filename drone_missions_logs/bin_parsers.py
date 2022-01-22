@@ -18,6 +18,9 @@ def read_mission_bin_file(file_name):
     list_num_data = num_data.tolist()
     return list_num_data
 
+def read_log_bin_mavlink_file(file_name):
+    pass
+
 def read_mission_bytes_array(bytes_array):
     pattern = "<2d2fI2f2d2fI2B3fB"
     count_point = (len(bytes_array)/mission_byte_count)

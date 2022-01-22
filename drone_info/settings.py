@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mission',
-    'yd_drone',
+    'drone_missions_logs',
     'corsheaders'
 ]
 
