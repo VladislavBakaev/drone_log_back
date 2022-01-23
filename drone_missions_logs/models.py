@@ -63,7 +63,7 @@ class YDMissionPoint(models.Model):
     class Meta:
         db_table = 'yd_drone_mission_point'
 
-class MavLinkMissionPoint(models.Model):
+class MavLinkPX4MissionPoint(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE)
     param1 = models.DecimalField(max_digits=15, decimal_places=9)
     param2 = models.DecimalField(max_digits=15, decimal_places=9)

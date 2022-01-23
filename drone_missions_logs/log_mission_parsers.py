@@ -6,7 +6,7 @@ adc_sensors = 24
 motors_num = 14
 mission_byte_count = 79
 
-def read_mission_bin_file(file_name):
+def parse_yd_mission_bin_file(file_name):
     dtype = np.dtype([('lat',np.float64),('lon',np.float64),('alt',np.float32),('r',np.float32),('time',np.int32),('hs',np.float32),
                     ('vs',np.float32),('plat',np.float64),('plon',np.float64),('ph',np.float32),('pa',np.float32),('flags',np.uint32),
                     ('photo',np.uint8),('psc',np.uint8),('pda',np.float32),('pp',np.float32),('pr',np.float32),('typ',np.uint8)])
@@ -18,10 +18,23 @@ def read_mission_bin_file(file_name):
     list_num_data = num_data.tolist()
     return list_num_data
 
-def read_log_bin_mavlink_file(file_name):
+def parse_mavlink_log_bin_file(file_name):
     pass
 
-def read_mission_bytes_array(bytes_array):
+def parse_mavlink_mission_waypoint(file_):
+    points = []
+    if not isinstance(file_,str):
+        text = file_.read().decode()
+        data = text.split('\r\n')
+        for text_point in data:
+            split_point = text_point.split('\t')
+            if len(split_point) == 12:
+                int_part = list(map(int, split_point[:4]))
+                float_part = list(map(float, split_point[4:]))
+                points.append(int_part + float_part)
+    return points
+
+def parse_yd_mission_bytes_array(bytes_array):
     pattern = "<2d2fI2f2d2fI2B3fB"
     count_point = (len(bytes_array)/mission_byte_count)
     points = []
@@ -34,7 +47,7 @@ def read_mission_bytes_array(bytes_array):
 
     return points
 
-def read_log_bin_file(file_name):
+def parse_yd_log_bin_file(file_name):
     # pattern = "<BL{0}f12f{1}h3B5fB25f2d19f5B2df2d5f2d3fL3fh35BH".format(adc_sensors, motors_num+18)
 
     # with open(file_name, "rb") as bin_file:

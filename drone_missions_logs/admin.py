@@ -1,5 +1,5 @@
 from django.contrib import admin
-from drone_missions_logs.models import LogFile, Mission, YDMissionPoint
+from drone_missions_logs.models import LogFile, Mission, YDMissionPoint, MavLinkPX4MissionPoint
 
 @admin.register(LogFile)
 class LogFileAdmin(admin.ModelAdmin):
@@ -13,3 +13,7 @@ class MissionAdmin(admin.ModelAdmin):
 @admin.register(YDMissionPoint)
 class YDMissionPointAdmin(admin.ModelAdmin):
     list_display = ('id', 'mission')
+    
+@admin.register(MavLinkPX4MissionPoint)
+class MavLinkPX4MissionPointAdmin(admin.ModelAdmin):
+    list_disply = {'id', 'mission'}

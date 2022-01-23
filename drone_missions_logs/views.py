@@ -1,3 +1,4 @@
+from xxlimited import new
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core import serializers
@@ -9,8 +10,9 @@ import json
 import uuid
 
 from drone_info.settings import MEDIA_ROOT
-from drone_missions_logs.models import Mission, LogFile, YDMissionPoint
-from drone_missions_logs.bin_parsers import read_mission_bytes_array, read_log_bin_file
+from drone_missions_logs.models import Mission, LogFile, YDMissionPoint, MavLinkPX4MissionPoint,PROTOCOL_TYPE_CHOICES
+from drone_missions_logs.log_mission_parsers import parse_yd_mission_bytes_array, parse_yd_log_bin_file,\
+                                                    parse_mavlink_mission_waypoint
 
 
 class MissionView(APIView): # get mission with points by id
@@ -26,7 +28,11 @@ class MissionView(APIView): # get mission with points by id
             result = "Mission with id '{0}' does not exist".format(kwargs['id'])
             status = 400
         else:
-            points_qs = YDMissionPoint.objects.filter(mission__id=kwargs['id'])
+            if mission.protocol_type == 'YD':
+                points_qs = YDMissionPoint.objects.filter(mission__id=mission.id)
+            else:
+                points_qs = MavLinkPX4MissionPoint.objects.filter(mission__id=mission.id) 
+            # points_qs = YDMissionPoint.objects.filter(mission__id=kwargs['id'])
             points_raw = json.loads(serializers.serialize('json', points_qs))
             at_create = ' '.join(str(mission.at_create).split('T'))[:-13]
             result = {'points':[],
@@ -62,7 +68,10 @@ class MissionViewWithParams(APIView): # get missions set by params
         for mission_raw in missions_raw:
             mission = mission_raw['fields']
             mission['id'] = mission_raw['pk']
-            points_qs = YDMissionPoint.objects.filter(mission__id=mission['id'])
+            if mission['protocol_type'] == 'YD':
+                points_qs = YDMissionPoint.objects.filter(mission__id=mission['id'])
+            else:
+                points_qs = MavLinkPX4MissionPoint.objects.filter(mission__id=mission['id']) 
             points_raw = json.loads(serializers.serialize('json', points_qs))
             mission['points'] = []
             if len(points_raw) != 0:
@@ -92,14 +101,24 @@ class MissionDataLoad(APIView): #save mission to db with points
             mission = None
         
         if mission is None:
-            new_mission = self._createMission(data, files)
-            self._createMissionPoints(files['mission'], new_mission)
+            if self._check_protocol_valid(data['protocol_type']):
+                new_mission = self._createMission(data, files)
+                self._createMissionPoints(files['mission'], new_mission)
+            else:
+                message = "Pritocol type unknown"
+                status = 400
             
         else:
             status = 400
             message = 'Mission with same name already exist'
 
         return JsonResponse({'message':message}, status=status)
+
+    def _check_protocol_valid(slef, protocol):
+        for valid_protocol in PROTOCOL_TYPE_CHOICES:
+            if valid_protocol[0] == protocol:
+                return True
+        return False
 
     def _createMission(self, data, files):
         file_name = uuid.uuid4().hex +'.'+ files['mission'].name.split('.')[1]
@@ -109,44 +128,71 @@ class MissionDataLoad(APIView): #save mission to db with points
         new_mission.mission_name = data['mission_name']
         new_mission.user_info = data['author']
         new_mission.description = data['mission_description']
+        new_mission.protocol_type = data['protocol_type']
         new_mission.flight_mission_file = files['mission']
         new_mission.at_create = timezone.now()
         new_mission.save()
         return new_mission
     
     def _createMissionPoints(self, file, mission):
-        file.file.seek(0)
-        bytes_array = file.file.read()
-        points = read_mission_bytes_array(bytes_array)
-        for point in points:
-            new_point = YDMissionPoint()
-            new_point.mission = mission
-            new_point.targetLat = point[0]
-            new_point.targetLon = point[1]
-            new_point.targetAlt = point[2]
-            new_point.targetRadius = point[3]
-            new_point.loiterTime = point[4]
-            new_point.maxHorizSpeed = point[5]
-            new_point.maxVertSpeed = point[6]
-            new_point.poiLat = point[7]
-            new_point.poiLon = point[8]
-            new_point.poiHeading = point[9]
-            new_point.poiAltitude = point[10]
-            new_point.flags = point[11]
-            new_point.photo = point[12]
-            new_point.panoSectorsCount = point[13]
-            new_point.panoDeltaAngle = point[14]
-            new_point.poiPitch = point[15]
-            new_point.poiRoll = point[16]
-            new_point.type = point[17]
-            new_point.save()
+        if mission.protocol_type == 'YD':
+            file.file.seek(0)
+            bytes_array = file.file.read()
+            points = parse_yd_mission_bytes_array(bytes_array)
+            for point in points:
+                new_point = YDMissionPoint()
+                new_point.mission = mission
+                new_point.targetLat = point[0]
+                new_point.targetLon = point[1]
+                new_point.targetAlt = point[2]
+                new_point.targetRadius = point[3]
+                new_point.loiterTime = point[4]
+                new_point.maxHorizSpeed = point[5]
+                new_point.maxVertSpeed = point[6]
+                new_point.poiLat = point[7]
+                new_point.poiLon = point[8]
+                new_point.poiHeading = point[9]
+                new_point.poiAltitude = point[10]
+                new_point.flags = point[11]
+                new_point.photo = point[12]
+                new_point.panoSectorsCount = point[13]
+                new_point.panoDeltaAngle = point[14]
+                new_point.poiPitch = point[15]
+                new_point.poiRoll = point[16]
+                new_point.type = point[17]
+                new_point.save()
+        
+        if mission.protocol_type == 'ML' or mission.protocol_type == 'PX4':
+            file.file.seek(0)
+            if file.name.endswith('.waypoints'):
+                points = parse_mavlink_mission_waypoint(file.file)
+
+            for point in points:
+                new_point = MavLinkPX4MissionPoint()
+                new_point.mission = mission
+                new_point.seq = point[0]
+                new_point.current = point[1]
+                new_point.frame = point[2]
+                new_point.command = point[3]
+                
+                new_point.param1 = point[4]
+                new_point.param2 = point[5]
+                new_point.param3 = point[6]
+                new_point.param4 = point[7]
+                
+                new_point.x = point[8]
+                new_point.y = point[9]
+                new_point.z = point[10]
+                new_point.autocontinue = point[11]
+                new_point.target_component = 0
+                new_point.save()                
 
 
 class MissionViewAll(APIView): #get all missions without points
     
     def get(self, request):
         missions = Mission.objects.all()
-        data = json.loads(serializers.serialize('json', missions, fields=('mission_name','user_info','at_create')))
+        data = json.loads(serializers.serialize('json', missions, fields=('mission_name','user_info','at_create','protocol_type')))
         response = {'result': []}
         for mission in data:
             fields = mission['fields']
@@ -220,7 +266,7 @@ class LogViewWithParams(APIView): #get log with points by params
             if not log['mission'] is None:
                 mission = Mission.objects.get(id=log['mission'])
                 log['mission'] = mission.mission_name
-            points = read_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
+            points = parse_yd_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
             log['points'] = points
             logs.append(log)
 
