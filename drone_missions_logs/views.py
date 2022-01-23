@@ -13,12 +13,10 @@ from drone_missions_logs.models import Mission, LogFile, YDMissionPoint
 from drone_missions_logs.bin_parsers import read_mission_bytes_array, read_log_bin_file
 
 
-class FlightMissionData(APIView):
+class MissionView(APIView): # get mission with points by id
 
     def get(self, request, *args, **kwargs):
-
         status = 200
-
         try:
             mission = Mission.objects.get(id=kwargs['id'])
         except ObjectDoesNotExist:
@@ -35,7 +33,8 @@ class FlightMissionData(APIView):
                       'id': kwargs['id'],
                       'mission_name':mission.mission_name,
                       'description':mission.description,
-                      'at_create':at_create, 
+                      'at_create':at_create,
+                      'protocol_type':mission.protocol_type, 
                       'user_info':mission.user_info}
             for point_raw in points_raw:
                 fields = point_raw['fields']
@@ -45,7 +44,7 @@ class FlightMissionData(APIView):
         return JsonResponse({'result':result}, status=status) 
 
 
-class FlightMissionDataWithParams(APIView):
+class MissionViewWithParams(APIView): # get missions set by params
     def get(self, request, *args, **kwargs):
         status = 200
 
@@ -76,7 +75,7 @@ class FlightMissionDataWithParams(APIView):
         return JsonResponse({'result':missions}, status=status)  
 
 
-class LoadFlightMissionData(APIView):
+class MissionDataLoad(APIView): #save mission to db with points
     
     parser_class = [JSONParser, FileUploadParser]
     
@@ -143,7 +142,7 @@ class LoadFlightMissionData(APIView):
             new_point.save()
 
 
-class FlightMissionHeagers(APIView):
+class MissionViewAll(APIView): #get all missions without points
     
     def get(self, request):
         missions = Mission.objects.all()
@@ -159,7 +158,7 @@ class FlightMissionHeagers(APIView):
         return JsonResponse(response, status=200)
 
 
-class LoadMissionLog(APIView):
+class LogDataLoad(APIView): #save log file to bd
     
     def post(self, request):
         files = request.FILES
@@ -191,7 +190,7 @@ class LoadMissionLog(APIView):
         return JsonResponse({'message':message}, status=status) 
 
 
-class MissionLogDataWithParams(APIView):
+class LogViewWithParams(APIView): #get log with points by params
 
     def get(self, request):
         status = 200

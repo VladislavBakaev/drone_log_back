@@ -1,13 +1,15 @@
 from django.urls import re_path
 
-from drone_missions_logs.views import FlightMissionData, LoadFlightMissionData, FlightMissionHeagers, LoadMissionLog, FlightMissionDataWithParams,\
-                           MissionLogDataWithParams
+from drone_missions_logs.views import MissionView, MissionDataLoad, MissionViewAll, LogDataLoad, \
+                                      MissionViewWithParams, LogViewWithParams
 
 urlpatterns = [
-    re_path(r'^mission/(?P<id>\d+)$', FlightMissionData.as_view()),
-    re_path(r'^flightmission/load$', LoadFlightMissionData.as_view()),
-    re_path(r'^missions/get$', FlightMissionHeagers.as_view()),
-    re_path(r'^logs/load$', LoadMissionLog.as_view()),
-    re_path(r'^mission$', FlightMissionDataWithParams.as_view()),
-    re_path(r'^logs$', MissionLogDataWithParams.as_view())
+    re_path(r'^mission/(?P<id>\d+)$', MissionView.as_view()),
+    re_path(r'^mission/all$', MissionViewAll.as_view()),
+    
+    re_path(r'^mission/load$', MissionDataLoad.as_view()),
+    re_path(r'^mission/get$', MissionViewWithParams.as_view()),
+    
+    re_path(r'^log/load$', LogDataLoad.as_view()),
+    re_path(r'^log/get$', LogViewWithParams.as_view())
 ]
