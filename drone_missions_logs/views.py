@@ -12,7 +12,7 @@ import uuid
 from drone_info.settings import MEDIA_ROOT
 from drone_missions_logs.models import Mission, LogFile, YDMissionPoint, MavLinkPX4MissionPoint,PROTOCOL_TYPE_CHOICES
 from drone_missions_logs.log_mission_parsers import parse_yd_mission_bytes_array, parse_yd_log_bin_file,\
-                                                    parse_mavlink_mission_waypoint
+                                                    parse_mavlink_mission_waypoint, parse_mavlink_log_bin_file
 
 
 class MissionView(APIView): # get mission with points by id
@@ -230,6 +230,7 @@ class LogDataLoad(APIView): #save log file to bd
             new_log.flight_data = data['flight_data']
             new_log.description = data['mission_description']
             new_log.at_create = timezone.now()
+            new_log.protocol_type = data['protocol_type']
             new_log.upload = files['log']
             new_log.save()
 
@@ -266,7 +267,15 @@ class LogViewWithParams(APIView): #get log with points by params
             if not log['mission'] is None:
                 mission = Mission.objects.get(id=log['mission'])
                 log['mission'] = mission.mission_name
-            points = parse_yd_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
+                
+            if log['protocol_type'] == 'YD':
+                points = parse_yd_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
+                
+            elif log['protocol_type'] == 'PX4' or log['protocol_type'] == 'ML':
+                points = parse_mavlink_log_bin_file(MEDIA_ROOT+'/'+log['upload'])
+            
+            else:
+                points = []
             log['points'] = points
             logs.append(log)
 

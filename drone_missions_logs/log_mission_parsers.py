@@ -1,10 +1,14 @@
 import numpy as np
 from struct import unpack
 import os
+from pymavlink import DFReader
 
 adc_sensors = 24
 motors_num = 14
 mission_byte_count = 79
+
+param_types_parse_for_mavlink = ["GPS"]
+count_parsing_log_file = 20
 
 def parse_yd_mission_bin_file(file_name):
     dtype = np.dtype([('lat',np.float64),('lon',np.float64),('alt',np.float32),('r',np.float32),('time',np.int32),('hs',np.float32),
@@ -19,7 +23,19 @@ def parse_yd_mission_bin_file(file_name):
     return list_num_data
 
 def parse_mavlink_log_bin_file(file_name):
-    pass
+    points_full = []
+    points = []
+    mlog = DFReader.DFReader_binary(file_name)
+    mlog.rewind()
+    while True:
+        m = mlog.recv_match(type=param_types_parse_for_mavlink)
+        if m is None:
+            break
+        m_dict = m.to_dict()
+        points_full.append([m_dict['Lat'], m_dict['Lng']])
+    for i in range(0, len(points_full), int(len(points_full)/count_parsing_log_file)):
+        points.append(points_full[i])
+    return points
 
 def parse_mavlink_mission_waypoint(file_):
     points = []
@@ -75,7 +91,7 @@ def parse_yd_log_bin_file(file_name):
     seek_step = 1520
     seek_offset = 340
     pack_size = 16
-    point_count = 20
+    point_count = count_parsing_log_file
     point_step = int((os.stat(file_name).st_size/(seek_step+pack_size))/point_count)
     points = []
 
