@@ -89,7 +89,6 @@ WSGI_APPLICATION = 'drone_info.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
 DATABASES = {
     # 'default': {
     #     'ENGINE': 'django.db.backends.sqlite3',
@@ -97,9 +96,9 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get("POSTGRES_DB", "dronelog"),
-        'USER': os.environ.get("POSTGRES_USER", "parkpass"),
-        'PASSWORD': os.environ.get("POSTGRES_PASSWORD", "parkpass"),
+        'NAME': os.environ.get("DATABASE_NAME", "dronelog"),
+        'USER': os.environ.get("DATABASE_USER", "parkpass"),
+        'PASSWORD': os.environ.get("DATABASE_PASS", ""),
         'HOST': os.environ.get("POSTGRES_DATABASE_HOST", "127.0.0.1"),
         'PORT': '',  # Set to empty string for default.
     }
@@ -142,7 +141,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
