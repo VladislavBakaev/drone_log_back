@@ -45,9 +45,10 @@ def parse_mavlink_mission_waypoint(file_):
         for text_point in data:
             split_point = text_point.split('\t')
             if len(split_point) == 12:
-                int_part = list(map(int, split_point[:4]))
-                float_part = list(map(float, split_point[4:]))
-                points.append(int_part + float_part)
+                if not int(float(split_point[9]))==0 and not int(float(split_point[9]))==0:
+                    int_part = list(map(int, split_point[:4]))
+                    float_part = list(map(float, split_point[4:]))
+                    points.append(int_part + float_part)
     return points
 
 def parse_yd_mission_bytes_array(bytes_array):

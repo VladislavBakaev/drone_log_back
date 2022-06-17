@@ -2,11 +2,13 @@ asgiref==3.4.1
 CD==1.1.0
 Django==3.2.8
 django-admin-tools==0.9.1
+django-braces==1.15.0
 django-cors-headers==3.10.0
 django-restframework==0.0.1
 djangorestframework==3.12.4
 environ==1.0
 future==0.18.2
+gunicorn==20.1.0
 lxml==4.7.1
 numpy==1.21.3
 psycopg2==2.9.1

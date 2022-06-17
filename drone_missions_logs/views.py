@@ -5,6 +5,9 @@ from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser, FileUploadParser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from braces.views import CsrfExemptMixin
+
 
 import json
 import uuid
@@ -84,9 +87,10 @@ class MissionViewWithParams(APIView): # get missions set by params
         return JsonResponse({'result':missions}, status=status)  
 
 
-class MissionDataLoad(APIView): #save mission to db with points
+class MissionDataLoad(CsrfExemptMixin, APIView): #save mission to db with points
     
     parser_class = [JSONParser, FileUploadParser]
+    authentication_classes = []
     
     def post(self, request):
         files = request.FILES
@@ -164,6 +168,7 @@ class MissionDataLoad(APIView): #save mission to db with points
         
         if mission.protocol_type == 'ML' or mission.protocol_type == 'PX4':
             file.file.seek(0)
+            points = []
             if file.name.endswith('.waypoints'):
                 points = parse_mavlink_mission_waypoint(file.file)
 
@@ -204,8 +209,10 @@ class MissionViewAll(APIView): #get all missions without points
         return JsonResponse(response, status=200)
 
 
-class LogDataLoad(APIView): #save log file to bd
-    
+class LogDataLoad(CsrfExemptMixin, APIView): #save log file to bd
+    authentication_classes = []
+
+
     def post(self, request):
         files = request.FILES
         data = json.loads(request.data['info'])
